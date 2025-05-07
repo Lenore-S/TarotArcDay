@@ -1,3 +1,601 @@
-Dhsfjsd
-dng
-gng
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Цифровая колода Таро</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #00f7ff; /* Ярко-голубой */
+            --secondary-color: #ff1a75; /* Ярко-розовый */
+            --background: #0d0d0d; /* Чёрный */
+            --card-bg: #1a1a1a; /* Темно-серый */
+            --text-color: #ffffff;
+            --text-secondary: #cccccc;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, #1e1e1e 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-grid {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+            perspective: 1000px;
+        }
+
+        .card {
+            width: 180px;
+            height: 270px;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        box-shadow 0.3s ease;
+            position: relative;
+            background: linear-gradient(180deg, var(--card-bg) 0%, #262626 100%);
+            border: 2px solid transparent;
+            outline: none;
+            min-width: 150px;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(5deg);
+            box-shadow: 0 20px 40px var(--primary-color);
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+            loading: lazy;
+        }
+
+        .card.selected {
+            border: 2px solid var(--secondary-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        .result {
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 15px;
+            transition: opacity 0.5s ease-in-out;
+            position: relative;
+        }
+
+        .result h2 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            background: linear-gradient(90deg, #ff6ec4, var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card-description {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .description-section {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: inset 0 0 10px rgba(0,255,255,0.2);
+        }
+
+        .description-section h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-weight: 600;
+            text-shadow: 0 0 5px var(--primary-color);
+        }
+
+        .description-section p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            text-shadow: 0 0 3px var(--background);
+        }
+
+        .disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+    
+
+        .reset-button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+            box-shadow: 0 0 10px rgba(0,255,255,0.3);
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .reset-button:hover {
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            display: none;
+            color: var(--primary-color);
+            text-shadow: 0 0 5px var(--background);
+        }
+
+        /* Адаптация под мобильные устройства */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .card-grid {
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .card {
+                width: calc(33.333% - 15px);
+                height: 200px;
+                min-width: 120px;
+            }
+
+            .card img {
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .result {
+                padding: 20px;
+            }
+
+            .description-section {
+                padding: 10px;
+            }
+
+            .description-section h3 {
+                font-size: 1rem;
+            }
+
+            .description-section p {
+                font-size: 0.85rem;
+            }
+
+            .reset-button {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-grid {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+
+            .card {
+                width: 100px;
+                height: 150px;
+                min-width: 100px;
+            }
+
+            .result {
+                margin-top: 20px;
+                padding: 15px;
+            }
+
+            .reset-button {
+                font-size: 0.8rem;
+            }
+}
+    </style>
+</head>
+<body>
+    <div class="container" role="application">
+        <h1>Выберите карту дня</h1>
+        <div id="loading">Загрузка...</div>
+        <div class="card-grid" aria-live="polite" >
+            
+            <div class="card" role="button" aria-label="Выбрать карту 1" tabindex="0" onclick="selectCard(this)">
+                <div class="glow"></div>
+                <img src="https://s405vla.storage.yandex.net/rdisk/5280dd2a23b80db9827ec5f24e934ccedf316f3356a1e42cd9516301b36f7334/681a7626/xPOAmOAiDQLcxc22n3CJTwT43prA90J1aHObFpENJWCd5s5Ey8SFNJdxJsIFMyNHM6CqYPYCsoU49_XOwEWL7g==?uid=447623405&filename=Screenshot_394.png&disposition=inline&hash=&limit=0&content_type=image%2Fpng&owner_uid=447623405&fsize=173438&hid=20d2d3625eeccdcf29ffa3acfa26c81e&media_type=image&tknv=v3&etag=9b227a64adb965bf7120c3903d33886f&ts=6347dc54d5580&s=57da5fbb85ad8639402b3984f071440fb807284bf52c484f9904e210e349f922&pb=U2FsdGVkX1-MDFucSIzpUB_NS2Gro1EfQHkLYMW0fDoN_5yi5Y7G8TDmeiqihpabpkIW8BXk7btcjZChuqe8Okr3bxzOjdNmGyBW6CKZWKQ" alt="Карта 1">
+            </div>
+            <div class="card" role="button" aria-label="Выбрать карту 2" tabindex="0" onclick="selectCard(this)">
+                <div class="glow"></div>
+                <img src="https://s405vla.storage.yandex.net/rdisk/5280dd2a23b80db9827ec5f24e934ccedf316f3356a1e42cd9516301b36f7334/681a7626/xPOAmOAiDQLcxc22n3CJTwT43prA90J1aHObFpENJWCd5s5Ey8SFNJdxJsIFMyNHM6CqYPYCsoU49_XOwEWL7g==?uid=447623405&filename=Screenshot_394.png&disposition=inline&hash=&limit=0&content_type=image%2Fpng&owner_uid=447623405&fsize=173438&hid=20d2d3625eeccdcf29ffa3acfa26c81e&media_type=image&tknv=v3&etag=9b227a64adb965bf7120c3903d33886f&ts=6347dc54d5580&s=57da5fbb85ad8639402b3984f071440fb807284bf52c484f9904e210e349f922&pb=U2FsdGVkX1-MDFucSIzpUB_NS2Gro1EfQHkLYMW0fDoN_5yi5Y7G8TDmeiqihpabpkIW8BXk7btcjZChuqe8Okr3bxzOjdNmGyBW6CKZWKQ" alt="Карта 2">
+            </div>
+            <div class="card" role="button" aria-label="Выбрать карту 3" tabindex="0" onclick="selectCard(this)">
+                <div class="glow"></div>
+                <img src="https://s2.radikal.cloud/2025/05/06/Screenshot_394e86e7371878499d5.png" alt="Карта 3">
+            </div>
+        </div>
+        <div class="result" id="result"></div>
+        <button class="reset-button" onclick="resetApp()">Выбрать заново</button>
+    </div>
+
+<script>
+const tarotCards = [
+
+    {
+        name: "Маг", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Маг", 
+        meaning: {
+            general: "Энергия творчества и реализации потенциала",
+            positive: "Новый проект, вдохновение, способность превращать идеи в реальность",
+            negative: "Перегрузка, излишняя амбициозность, разочарование",
+            advice: "Сфокусируйтесь на своих сильных сторонах. Используйте ресурсы осознанно."
+        }
+    },
+    {
+        name: "Жрица", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Императрица", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Императрица", 
+        meaning: {
+            general: "Фертильность и материальное изобилие",
+            positive: "Успех в делах, плодородие, забота о близких",
+            negative: "Перфекционизм, излишняя забота, финансовые потери",
+            advice: "Балансируйте между заботой о других и собой. Делайте планы на будущее."
+        }
+    },
+    {
+        name: "Император", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Императрица", 
+        meaning: {
+            general: "Фертильность и материальное изобилие",
+            positive: "Успех в делах, плодородие, забота о близких",
+            negative: "Перфекционизм, излишняя забота, финансовые потери",
+            advice: "Балансируйте между заботой о других и собой. Делайте планы на будущее."
+        }
+    },
+    {
+        name: "Иерофант", 
+        image: "https://s284vla.storage.yandex.net/rdisk/c2e25fe77d33700d2f06a0de3f329e39f87968a3d4ddb5ca835df1b2e8dddfdd/681a77c7/xPOAmOAiDQLcxc22n3CJT4fsz722nw7CbaFn0KVSxEO7nyTUOKw8_PF7iW1plOftVWtiytETKj1-5U-xZBVvYw==?uid=447623405&filename=IMG_20250506_224135_edit_1284046756548340.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=447623405&fsize=2676038&hid=900a5c0525c26898f1c3e3db682b2212&media_type=image&tknv=v3&etag=25dc998d49d0bd1b8d9e7da68a1eac18&ts=6347dde283fc0&s=e405a9e43bc54a8a76c3909cc804282812e7c388d6ed51badcad8f5af70caf03&pb=U2FsdGVkX1_WXuU8iAeDG0ohg8s752iNwhhEghc0enhzI08yHV3oErUs6YddD0wpMlfcE5ZfdSTMJr5AmjrDj-MEZfoRoC9ojOLSJL5031o", 
+        meaning: {
+            general: "Фертильность и материальное изобилие",
+            positive: "Успех в делах, плодородие, забота о близких",
+            negative: "Перфекционизм, излишняя забота, финансовые потери",
+            advice: "Балансируйте между заботой о других и собой. Делайте планы на будущее."
+        }
+    },
+    {
+        name: "Влюбленные", 
+        image: "https://s254klg.storage.yandex.net/rdisk/8c8d855a3a9dd5db4245175e122336ca8d29bcc10458a7f9fd01a72364dcaab1/681a7bb9/xPOAmOAiDQLcxc22n3CJT8HpLPlmXhHOJNOxn1MHrC7JZ5wqhV0irE09LW_gZGgOvtDeTNROWKljcJs2bkWL_w==?uid=447623405&filename=IMG_20250506_224109_edit_1283944920516063.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=447623405&fsize=2392569&hid=97ecf47e2ceb24ecd647fbb38b2e0f5a&media_type=image&tknv=v3&etag=892777c3e699f6c2defcc37542aad72a&ts=6347e1a5ba040&s=5df0454fb2efc1d87f762e8bb5dd7fff249876a98d8d7f158286ce31063169d6&pb=U2FsdGVkX189BaFrA1w7kYV1E05rsgxGu6fr9ZSxptGGbkMZQ4OqrcrVcwJHYXKjIhnN0xaAZYgYUyhJHWezUwQ_77NIOcwd6zkqL0hiiVo", 
+        meaning: {
+            general: "Фертильность и материальное изобилие",
+            positive: "Успех в делах, плодородие, забота о близких",
+            negative: "Перфекционизм, излишняя забота, финансовые потери",
+            advice: "Балансируйте между заботой о других и собой. Делайте планы на будущее."
+        }
+    },
+    {
+        name: "Шут", 
+        image: "https://s1009sas.storage.yandex.net/rdisk/faf05576ec93d0fe12feb657513b9c823a19a39048c010ac560bec97a1b439f6/681a7b66/xPOAmOAiDQLcxc22n3CJT988IQ-Kl7QNkDb5ucf4EIVhgHWnFiIQSxfdghOIozU0H3U14N8JeKH8dBvmer5KPA==?uid=447623405&filename=IMG_20250506_224118_edit_1283992569080640.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=447623405&fsize=2171844&hid=85c807144ae2cc94b4750d2e3cd04f95&media_type=image&tknv=v3&etag=9250ea2203ae3439aee1966f93a41c98&ts=6347e15692580&s=860a532f9bdebc666e9edc824dd2e3d5b5818f4f8f1006b8203b20542eae8f07&pb=U2FsdGVkX19IY8naPHAX3BbBqPkJENOZt2xkE8kBlUQCpZpbpsWz3oRNrU1DNWEBzTbg033oUkOo2GObANkZzVdZKLSrttb2Vh6pLBXtIPk", 
+        meaning: {
+            general: "Фертильность и материальное изобилие",
+            positive: "Успех в делах, плодородие, забота о близких",
+            negative: "Перфекционизм, излишняя забота, финансовые потери",
+            advice: "Балансируйте между заботой о других и собой. Делайте планы на будущее."
+        }
+    },
+    {
+        name: "Колесница", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Сила", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Отшельник", 
+        image: "https://s254klg.storage.yandex.net/rdisk/0ce4a511399bffe2aaec76f339212b7325d6380c633704d769a69c0fef415f9d/681a7b05/xPOAmOAiDQLcxc22n3CJT2x0c-wxkPF7gdPAODRxRICDMlYZ1CssiyxVMFyDckzj48NfjyzZ7OElz4BQeTpPww==?uid=447623405&filename=IMG_20250506_224237.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=447623405&fsize=2415356&hid=1fe93f74543486f9fe9d596e6d6da49b&media_type=image&tknv=v3&etag=6078d8723e120bfccb369b0baa895d4e&ts=6347e0fa10b40&s=289e2f2deac2449f5bd156d2dee5395b578fbff5720f07cfd23b0f0883835d1d&pb=U2FsdGVkX19t6ylnRr0seQ3X4XeNgAKWVhds1Ds-HWr3Yu8d3hDy501dVSLrj1r1WQ2lOPOFLJUztTjPXIz7wTa401ICEDQfbBAYD_WDLKk", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Колесо фортуны", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Справедливость", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Повешенный", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Смерть", 
+        image: "https://s674sas.storage.yandex.net/rdisk/96ddb9460a2c511030e4a642892af21ef008c1884bb7ec998f9aac3967351012/681a7b42/xPOAmOAiDQLcxc22n3CJT3k6W_ttnAofJ2l73ACtoivPOJPGOa6FEsQUg2RPZ8B89Qw2lv9LqXKeuZ-KBzPlOQ==?uid=447623405&filename=IMG_20250506_224124_edit_1284007167774908.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=447623405&fsize=2437443&hid=59e3ceb5158899330f387f8a23cee915&media_type=image&tknv=v3&etag=ee199388290b059c82091c9907eb796c&ts=6347e1343d480&s=236181e7202a57d79dac9108cf306341a50645c3185a27c243334fa8b2948c9b&pb=U2FsdGVkX1_qmk1TWy8kP4fnljc1EUkXDLmdJVt3eVj2WhNyi18aiD8yDgwUb8yewkoI_lN6uyyqRdr3Y1uvxKmpPLWt0wZnR4LG-hl6y3U", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Умеренность", 
+        image: "https://s528vla.storage.yandex.net/rdisk/739873b68481997e4c6035cf2f0c43272028d35e1e791f4468041a01d15cde3b/681a7b22/xPOAmOAiDQLcxc22n3CJT5SFvsPoarss_WyFUXlm0IwvzLvaLfboRmbhUOYmHR22FWLcrbAUZ4I17I9Z7FuOAw==?uid=447623405&filename=IMG_20250506_224130_edit_1284022834155635.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=447623405&fsize=2336918&hid=40eb4df7ce638180c7f6a82959641453&media_type=image&tknv=v3&etag=b74a69892613affe8acaec3930fb4f1f&ts=6347e115b8c80&s=5a69334cd89b2fc47513ef24247d8119faabf5145192bf2dd863e0fcb73fbc1b&pb=U2FsdGVkX187mGGsRXSyfLx3DkGusVcucn71tht0JdXD-FnsYVxaqeQ5THRbYqhfWF2fjsSULYKR2izZXKFQRfasSTDimq_LZj-k9lFL-gA", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Дьявол", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Башня", 
+        image: "https://s222klg.storage.yandex.net/rdisk/5c8b19bc239883420c035dbe6eb73ce5f4027a7e590b87db7b5385b415aed782/681a7b8d/xPOAmOAiDQLcxc22n3CJTzIXrrZ02PxjmGUJ5Fk4qC9FVlH-JQkZxBn4IktPj9loha86OW9TpKKPiRniKZ56Mw==?uid=447623405&filename=IMG_20250506_224113_edit_1283976365678559.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=447623405&fsize=2632908&hid=622999f779ab5bfbde8f7210878ca411&media_type=image&tknv=v3&etag=9703e85f263feae91a8aee9cb7e50f1f&ts=6347e17bc3d40&s=a7bfdb53f7ab58556123ae192525f31ea4098819cddac44a7770573e6c2b468e&pb=U2FsdGVkX19H9qcHAfyWwrrfBJEXFL3k-ze4QHhjoLxDhI7KCz9w-CFdKPss4M5WMGeU0JE3pDkK1cE3URyLwT5q2mzx1u3uRNq8JJUm1BI", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Звезда", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Луна", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Солнце", 
+        image: "https://s588sas.storage.yandex.net/rdisk/0722c5d870fdc911424420cdc0cfea8d494d0fd1aeff651d1bd17e80d61e50ac/681a7bdc/xPOAmOAiDQLcxc22n3CJTxx403G0gfhN9hULa40z2uE1telMkCPicBN3GMpxu7Jvnoz3RHHRRl5W2u26lVMIgw==?uid=447623405&filename=IMG_20250506_224102_edit_1283926375565025.jpg&disposition=inline&hash=&limit=0&content_type=image%2Fjpeg&owner_uid=447623405&fsize=2541429&hid=4c4a555ca6b6f4b9ec05ad756abac329&media_type=image&tknv=v3&etag=33b629f7ec65a0185ebf0ff21c323368&ts=6347e1c71af00&s=137f52c324800571bd429f16265fce171991e336ddc3386f01fc03b15a35320a&pb=U2FsdGVkX19ZCIxJ8yP4gROrq2CWJVxGSgcDez3mLcLuz0ifXH2hHfT86JuCdTKgS5woMoyVjyjKSmbhF2xwegW9ubeVk2sKR8tI6y7T9V4", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Суд", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Мир", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Жрица", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Жрица", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+    {
+        name: "Жрица", 
+        image: "https://via.placeholder.com/180x270/1a1a2e/ffffff?text=Жрица", 
+        meaning: {
+            general: "Интуитивное знание и внутренняя мудрость",
+            positive: "Интуиция, духовный рост, принятие неизвестного",
+            negative: "Слишком много теории, избегание действий, изоляция",
+            advice: "Доверяйте своим внутренним подсказкам. Не бойтесь принимать сложные решения."
+        }
+    },
+
+    // Добавьте остальные карты с аналогичной структурой
+];
+
+let isFirstClick = true;
+
+function selectCard(clickedCard) {
+    if (!isFirstClick) return;
+
+    document.getElementById('loading').style.display = 'block';
+
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('selected');
+        card.classList.add('disabled');
+    });
+
+    clickedCard.classList.add('selected');
+    clickedCard.classList.remove('disabled');
+
+    const randomIndex = Math.floor(Math.random() * tarotCards.length);
+    const selectedCard = tarotCards[randomIndex];
+
+    const cardImage = clickedCard.querySelector('img');
+    cardImage.src = selectedCard.image;
+
+    document.getElementById('result').innerHTML = `
+        <h2>${selectedCard.name}</h2>
+        <div class="card-description">
+            <div class="description-section">
+                <h3>Общее значение</h3>
+                <p>${selectedCard.meaning.general}</p>
+            </div>
+            <div class="description-section">
+                <h3>Положительное значение</h3>
+                <p>${selectedCard.meaning.positive}</p>
+            </div>
+            <div class="description-section">
+                <h3>Отрицательное значение</h3>
+                <p>${selectedCard.meaning.negative}</p>
+            </div>
+            <div class="description-section">
+                <h3>Рекомендации</h3>
+                <p>${selectedCard.meaning.advice}</p>
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+    }, 500);
+
+    isFirstClick = false;
+}
+
+function resetApp() {
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('selected', 'disabled');
+        card.querySelector('img').src = "https://s2.radikal.cloud/2025/05/06/Screenshot_394e86e7371878499d5.png";
+    });
+    document.getElementById('result').innerHTML = "";
+    isFirstClick = true;
+}
+</script>
+</body>
+</html>
